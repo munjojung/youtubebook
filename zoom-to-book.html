@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>화상회의, 책이 되다 | Zoom to Book</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Pretendard:wght@300;400;600;700&display=swap');
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Pretendard', sans-serif;
+      background-color: #0b1120;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .font-serif-kr { font-family: 'Noto Serif KR', serif; }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    header {
+      position: sticky; top: 0; z-index: 50;
+      background-color: rgba(15, 23, 42, 0.95);
+      border-bottom: 1px solid #1e293b;
+      padding: 0.75rem 1.25rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .header-title { display: flex; align-items: center; gap: 0.5rem; font-weight: bold; color: #fff; }
+    .badge { background-color: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.2); font-size: 0.75rem; padding: 0.1rem 0.4rem; border-radius: 4px; font-weight: normal; }
+    
+    .btn-icon { background: none; border: none; color: #94a3b8; cursor: pointer; padding: 0.5rem; border-radius: 0.5rem; font-size: 1.1rem; }
+    .btn-icon:hover { color: #fff; background-color: #1e293b; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #0f172a; font-weight: bold; border: none; padding: 0.5rem 1rem;
+      border-radius: 0.5rem; cursor: pointer; font-size: 0.875rem;
+      display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .btn-secondary {
+      background: #1e293b; color: #cbd5e1; border: 1px solid #334155;
+      padding: 0.35rem 0.75rem; border-radius: 0.375rem; font-size: 0.75rem;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-secondary:hover { background: #334155; color: #fff; }
+
+    .btn-scale { background: none; border: none; color: #94a3b8; font-weight: bold; padding: 0.2rem 0.5rem; cursor: pointer; border-radius: 4px; }
+    .btn-scale.active { color: #fbbf24; background-color: #334155; }
+
+    main { flex: 1; max-width: 88rem; width: 100%; margin: 0 auto; padding: 1.5rem 1rem; }
+
+    .glass-card {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.5rem;
+    }
+
+    .text-scale-sm { font-size: 0.95rem; line-height: 1.7; }
+    .text-scale-md { font-size: 1.1rem; line-height: 1.85; }
+    .text-scale-lg { font-size: 1.25rem; line-height: 2.0; }
+
+    .reader-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    @media (min-width: 1024px) {
+      .reader-grid {
+        grid-template-columns: 1.1fr 1fr;
+        align-items: start;
+      }
+    }
+
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex; justify-content: center; align-items: center; padding: 1rem;
+    }
+    .modal-content {
+      background: #1e293b; border: 1px solid #334155; border-radius: 1rem;
+      width: 100%; max-width: 32rem; padding: 1.5rem; position: relative;
+    }
+    .input-field {
+      width: 100%; background: #0f172a; border: 1px solid #334155;
+      color: #fff; padding: 0.6rem 0.8rem; border-radius: 0.5rem; margin-top: 0.25rem; font-size: 0.875rem;
+    }
+    .input-field:focus { outline: none; border-color: #fbbf24; }
+
+    .pip-guide-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      color: #cbd5e1;
+      font-size: 0.8rem;
+      line-height: 1.6;
+    }
+
+    .toast-banner {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #fbbf24;
+      padding: 0.6rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .hidden { display: none !important; }
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-2 { gap: 0.5rem; }
+  </style>
+</head>
+<body>
+
+  <!-- Header Navigation -->
+  <header>
+    <div class="header-title">
+      <button onclick="showHome()" class="btn-icon" title="홈으로">🏠</button>
+      <span>화상회의, 책이 되다</span>
+      <span class="badge">Beta</span>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <div style="background:#1e293b; padding:2px; border-radius:6px; border:1px solid #334155;">
+        <button onclick="setFontScale('sm')" id="btn-scale-sm" class="btn-scale">A</button>
+        <button onclick="setFontScale('md')" id="btn-scale-md" class="btn-scale active">A</button>
+        <button onclick="setFontScale('lg')" id="btn-scale-lg" class="btn-scale">A</button>
+      </div>
+
+      <button onclick="openModal()" class="btn-primary">
+        ✨ AI 변환
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main>
+    <!-- HOME VIEW -->
+    <section id="view-home">
+      <div class="glass-card" style="position:relative; overflow:hidden;">
+        <p style="color:#fbbf24; font-size:0.75rem; font-weight:bold; letter-spacing:1px; margin-bottom:0.5rem;">CONTENT REPURPOSE WORKFLOW</p>
+        <h2 style="font-size:1.75rem; font-weight:bold; color:#fff; margin-bottom:1rem;">화상회의, 책이 되다</h2>
+        <p style="color:#94a3b8; font-size:0.95rem; line-height:1.6; margin-bottom:1.5rem;">
+          Zoom 녹화본, 유튜브 강연 영상, 자막 텍스트 파일 하나로 누구나 읽기 편한 온라인 책으로 재가공하는 워크플로우입니다.
+          비밀번호 잠금장치가 포함된 나만의 비공개 웹북을 손쉽게 만들어 보세요.
+        </p>
+
+        <button onclick="startReading()" class="btn-primary" style="padding:0.75rem 1.5rem; font-size:1rem;">
+          📖 이어서 읽기 / 시작하기
+        </button>
+      </div>
+
+      <!-- Book Info Card -->
+      <div class="glass-card">
+        <div class="flex justify-between items-center" style="border-bottom:1px solid #334155; padding-bottom:0.75rem; margin-bottom:1rem;">
+          <span style="color:#fbbf24; font-weight:bold; font-size:0.875rem;">▶️ 현재 로드된 콘텐츠</span>
+          <span style="font-size:0.75rem; color:#64748b;">YouTube 연동</span>
+        </div>
+        
+        <h3 id="book-title" style="font-size:1.25rem; font-weight:bold; color:#fff; margin-bottom:0.5rem;">10개 패턴영어 100문장 복습영상 2탄</h3>
+        <p id="book-desc" style="color:#94a3b8; font-size:0.875rem; margin-bottom:1rem;">May Daily English · 1시간 동안 듣고 따라하며 실전 패턴을 익히는 학습 웹북입니다.</p>
+
+        <div style="background:#000; border-radius:0.75rem; overflow:hidden; border:1px solid #334155; margin-bottom:1.5rem; aspect-ratio:16/9;">
+          <iframe id="home-yt-iframe" style="width:100%; height:100%; border:none;" src="https://www.youtube.com/embed/w0vbL3luTD8" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+
+        <h4 style="font-size:0.75rem; font-weight:bold; color:#64748b; margin-bottom:0.75rem;">목차 및 타임스탬프 (Table of Contents)</h4>
+        <div id="index-list" style="display:flex; flex-direction:column; gap:0.5rem;">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- 나의 학습 보관함 (저장된 책 목록) -->
+      <div class="glass-card">
+        <div class="flex justify-between items-center" style="border-bottom:1px solid #334155; padding-bottom:0.75rem; margin-bottom:1rem;">
+          <span style="color:#fbbf24; font-weight:bold; font-size:0.875rem;">📚 나의 저장된 학습 책 보관함 (History)</span>
+          <span style="font-size:0.75rem; color:#64748b;">클릭하여 복습하기</span>
+        </div>
+        <div id="saved-books-list" style="display:flex; flex-direction:column; gap:0.5rem;">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </section>
+
+    <!-- READER VIEW (2단 분할 레이아웃 + 학습 노트) -->
+    <section id="view-reader" class="hidden">
+      <div id="lock-screen" class="glass-card" style="text-align:center; max-width:24rem; margin:3rem auto;">
+        <div style="font-size:2rem; margin-bottom:0.5rem;">🔒</div>
+        <h3 style="color:#fff; font-weight:bold; margin-bottom:0.25rem;">비공개 웹북 보호 설정</h3>
+        <p style="color:#94a3b8; font-size:0.75rem; margin-bottom:1rem;">이 원고를 열람하려면 비밀번호를 입력해 주세요.</p>
+        <div class="flex gap-2">
+          <input type="password" id="input-password" placeholder="비밀번호 (기본: 1234)" class="input-field" style="margin-top:0;" onkeydown="if(event.key==='Enter') unlockBook()">
+          <button onclick="unlockBook()" class="btn-primary">확인</button>
+        </div>
+        <p id="lock-error" class="hidden" style="color:#f87171; font-size:0.75rem; margin-top:0.5rem;">비밀번호가 일치하지 않습니다.</p>
+      </div>
+
+      <div id="book-content" class="hidden">
+        <div class="flex justify-between items-center" style="background:#0f172a; padding:0.75rem 1rem; border-radius:0.5rem; margin-bottom:1rem; border:1px solid #1e293b;">
+          <button onclick="showHome()" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:0.875rem;">← 목차로 돌아가기</button>
+          <span id="reader-chapter-indicator" style="color:#fbbf24; font-weight:bold; font-size:0.875rem;">1 / 6 챕터</span>
+        </div>
+
+        <!-- 학습 위치 복원 안내 토스트 배너 -->
+        <div id="resume-toast" class="toast-banner hidden">
+          <span>💡</span>
+          <span id="resume-toast-text">이전에 학습하던 마지막 위치로 이동했습니다.</span>
+        </div>
+
+        <div class="reader-grid">
+          <!-- 좌측: 유투브 영상 / 타이머 & 챕터별 메모장 -->
+          <div style="position:sticky; top:5rem;">
+            <!-- 영상 플레이어 카드 -->
+            <div class="glass-card" style="padding:1.25rem; margin-bottom:1rem;">
+              <div class="flex justify-between items-center" style="margin-bottom:0.75rem;">
+                <p style="color:#fbbf24; font-size:0.85rem; font-weight:bold;">📺 챕터 동기화 플레이어</p>
+                <span id="player-time-badge" style="background:#1e293b; color:#fbbf24; font-size:0.75rem; padding:3px 8px; border-radius:4px; font-weight:bold;">0초 지점</span>
+              </div>
+              
+              <!-- 일반 영상 플레이어 영역 (임베드 허용 영상용) -->
+              <div id="normal-player-wrapper" style="background:#000; border-radius:0.75rem; overflow:hidden; aspect-ratio:16/9; border:1px solid #334155; margin-bottom:0.5rem; min-height:260px; position:relative;">
+                <div id="yt-player-container"></div>
+              </div>
+
+              <!-- 퍼가기 금지 영상 전용 패널 -->
+              <div id="embed-blocked-notice" class="hidden pip-guide-box" style="margin-bottom:0.5rem; text-align:center; padding:1.5rem 1rem;">
+                <div style="font-size:1.8rem; margin-bottom:0.5rem;">📌</div>
+                <strong style="color:#f87171; font-size:0.9rem; display:block; margin-bottom:0.5rem;">외부 임베드가 제한된 영상입니다</strong>
+                <p style="color:#94a3b8; font-size:0.8rem; margin-bottom:1rem; line-height:1.5;">
+                  아래 버튼을 누르면 현재 챕터의 학습 위치가 동기화되어 우측 뷰(또는 새 창) 유튜브 플레이어에서 이어서 재생됩니다.
+                </p>
+                <a id="sync-right-view-link" href="#" onclick="onSyncLinkClicked(event)" class="btn-primary" style="width:100%; justify-content:center; background:linear-gradient(135deg, #3b82f6, #1d4ed8); color:#fff; text-decoration:none; padding:0.75rem; font-size:0.875rem;">
+                  🔗 <span id="sync-link-text">[1분 0초 지점] 우측 뷰에서 링크 열기</span>
+                </a>
+              </div>
+
+              <!-- 챕터별 실시간 학습 위치 및 초기화 제어 바 -->
+              <div id="embed-blocked-controls" class="hidden pip-guide-box">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <span style="font-size:0.75rem; color:#94a3b8; display:block;">현재 챕터별 실시간 학습 위치 (유튜브 동기화 증가)</span>
+                    <strong id="blocked-current-time-str" style="font-size:1rem; color:#fbbf24;">0분 0초</strong>
+                  </div>
+                  <div class="flex gap-2">
+                    <button onclick="resetBlockedTime()" class="btn-secondary" style="color:#f87171;">🔄 초기화</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 챕터 단위 개인 학습 노트 카드 (폰트 20px) -->
+            <div class="glass-card" style="padding:1.25rem;">
+              <div class="flex justify-between items-center" style="margin-bottom:0.5rem;">
+                <span style="color:#fbbf24; font-size:1rem; font-weight:bold;">📝 챕터 학습 노트</span>
+                <span id="note-status" style="color:#10b981; font-size:0.85rem; display:none;">✓ 저장됨</span>
+              </div>
+              <p style="color:#64748b; font-size:0.8rem; margin-bottom:0.75rem;">들으면서 중요한 핵심 문장이나 복습할 내용을 자유롭게 정리하세요. (자동 저장)</p>
+              
+              <textarea id="chapter-note" rows="6" class="input-field" placeholder="여기에 들은 내용, 나만의 표현, 메모를 작성하세요..." style="resize:vertical; font-size:20px; line-height:1.7; padding:0.9rem;" oninput="autoSaveNote()"></textarea>
+              
+              <div class="flex justify-between items-center" style="margin-top:0.75rem;">
+                <button onclick="clearNote()" style="background:none; border:none; color:#64748b; font-size:0.8rem; cursor:pointer;">내용 지우기</button>
+                <button onclick="saveNoteExplicitly()" class="btn-primary" style="padding:0.4rem 0.9rem; font-size:0.8rem;">노트 저장</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 우측: 챕터 원고 -->
+          <div>
+            <article class="glass-card font-serif-kr text-scale-md" style="padding:2rem; margin-bottom:1rem;">
+              <header style="border-bottom:1px solid #334155; padding-bottom:1rem; margin-bottom:1.5rem;">
+                <span id="chapter-num" style="color:#fbbf24; font-size:0.75rem; font-weight:bold;">CHAPTER 01</span>
+                <h2 id="chapter-title" style="color:#fff; font-size:1.5rem; font-weight:bold; margin-top:0.25rem;">프롤로그</h2>
+              </header>
+
+              <div id="chapter-body" style="white-space:pre-line; color:#e2e8f0; line-height:1.8;">
+                <!-- Chapter content -->
+              </div>
+            </article>
+
+            <div class="flex justify-between items-center">
+              <button onclick="prevChapter()" id="btn-prev-chap" class="btn-primary" style="background:#334155; color:#fff;">이전 챕터</button>
+              <button onclick="nextChapter()" id="btn-next-chap" class="btn-primary">다음 챕터</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- AI Modal -->
+  <div id="ai-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="flex justify-between items-center" style="margin-bottom:1rem;">
+        <h3 style="color:#fbbf24; font-weight:bold; font-size:1.1rem;">✨ Gemini AI 웹북 자동 변환</h3>
+        <button onclick="closeModal()" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:1.2rem;">✕</button>
+      </div>
+
+      <div style="margin-bottom:1rem;">
+        <label style="color:#cbd5e1; font-size:0.75rem; font-weight:bold;">Gemini API Key</label>
+        <input type="password" id="api-key" placeholder="AIzaSy..." class="input-field">
+      </div>
+
+      <div style="margin-bottom:1rem;">
+        <label style="color:#cbd5e1; font-size:0.75rem; font-weight:bold;">YouTube 영상 주소 (필수)</label>
+        <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=..." class="input-field">
+      </div>
+
+      <div style="margin-bottom:1.25rem;">
+        <label style="color:#cbd5e1; font-size:0.75rem; font-weight:bold;">자막 / 녹취록 텍스트 직접 입력 (필수)</label>
+        <textarea id="raw-text" rows="5" placeholder="유튜브 영상의 스크립트나 자막 텍스트를 붙여넣어 주세요." class="input-field" style="resize:none;"></textarea>
+      </div>
+
+      <button onclick="processAIConversion()" id="btn-convert" class="btn-primary" style="width:100%; justify-content:center; padding:0.75rem;">
+        AI 책 변환 시작하기
+      </button>
+    </div>
+  </div>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script>
+    let defaultBook = {
+      id: "w0vbL3luTD8",
+      title: "10개 패턴영어 100문장 복습영상 2탄",
+      description: "May Daily English · 1시간 동안 듣고 따라하며 실전 패턴을 익히는 학습 웹북입니다.",
+      youtubeUrl: "https://www.youtube.com/watch?v=w0vbL3luTD8",
+      youtubeId: "w0vbL3luTD8",
+      password: "1234",
+      chapters: [
+        {
+          num: "01",
+          title: "might as well (~하는 편이 낫겠다)",
+          time: "약 3분",
+          seconds: 5,
+          content: `어차피 이렇게 된 거 '~하는 편이 낫겠다'라고 말할 때 유용한 패턴입니다.\n\n• Since I woke up early, I might as well get ready for work. (일찍 일어난 김에 출근 준비나 하는 게 낫겠어.)\n• Since the appointment is canceled tomorrow, I might as well sleep in. (내일 약속도 취소됐으니 늦잠이나 자야겠다.)`
+        },
+        {
+          num: "02",
+          title: "I can't help but (~하지 않을 수 없다)",
+          time: "약 4분",
+          seconds: 180,
+          content: `자신도 모르게 어떠한 행동이나 감정을 억제할 수 없을 때 사용하는 수거 패턴입니다.\n\n• I can't help but smile when I see you. (너를 보면 웃지 않을 수가 없어.)`
+        },
+        {
+          num: "03",
+          title: "be supposed to (~하기로 되어 있다)",
+          time: "약 5분",
+          seconds: 360,
+          content: `예정된 약속이나 규칙, 의무 사항을 나타낼 때 자연스럽게 구사하는 표현입니다.\n\n• What time are we supposed to meet? (우리 몇 시에 만나기로 되어 있나요?)`
+        },
+        {
+          num: "04",
+          title: "It doesn't hurt to (~해서 손해 볼 건 없다)",
+          time: "약 4분",
+          seconds: 540,
+          content: `조언이나 권유를 할 때 밑져야 본전이라는 느낌으로 제안하는 표현입니다.\n\n• It doesn't hurt to ask. (물어본다고 밑져야 본전이지 / 손해 볼 건 없잖아.)`
+        },
+        {
+          num: "05",
+          title: "Just because A doesn't mean B (A라고 해서 B인 것은 아니다)",
+          time: "약 5분",
+          seconds: 720,
+          content: `섣부른 단정이나 선입견을 경계할 때 논리적으로 보완해 주는 패턴입니다.`
+        },
+        {
+          num: "06",
+          title: "as long as (~하는 한, ~하기만 하면)",
+          time: "약 5분",
+          seconds: 1843,
+          content: `• As long as you're on our team, you have to follow our rules. (우리 팀에 있는 한 우리 규칙을 따라야 해.)\n• You'll bounce back fast as long as you follow the doctor's orders. (의사 지시만 잘 따르면 금방 회복할 거야.)`
+        }
+      ]
+    };
+
+    let bookData = defaultBook;
+    let currentChapterIndex = 0;
+    let noteSaveTimeout = null;
+    let ytPlayer = null;
+    let positionSaveInterval = null;
+    let blockedTimerInterval = null;
+    
+    let chapterTimerStarts = {};
+    let chapterActiveTimers = {};
+
+    const blockedEmbedIds = ["dQw4w9WgXcQ"];
+
+    window.onload = function() {
+      const stored = localStorage.getItem('webook_library');
+      if (!stored) {
+        localStorage.setItem('webook_library', JSON.stringify([defaultBook]));
+      } else {
+        try {
+          const parsed = JSON.parse(stored);
+          if (!Array.isArray(parsed) || parsed.length === 0 || !parsed[0].chapters) {
+            localStorage.setItem('webook_library', JSON.stringify([defaultBook]));
+          }
+        } catch (e) {
+          localStorage.setItem('webook_library', JSON.stringify([defaultBook]));
+        }
+      }
+
+      initSavedBooks();
+      loadBook(defaultBook.id);
+      const savedKey = localStorage.getItem('gemini_api_key');
+      if (savedKey) document.getElementById('api-key').value = savedKey;
+    };
+
+    function onYouTubeIframeAPIReady() {}
+
+    function initPlayer(vid, startSec) {
+      stopAutoBlockedTimer();
+      if (ytPlayer && ytPlayer.destroy) {
+        try { ytPlayer.destroy(); } catch(e){}
+      }
+      
+      try {
+        ytPlayer = new YT.Player('yt-player-container', {
+          height: '100%',
+          width: '100%',
+          videoId: vid,
+          playerVars: {
+            'start': startSec,
+            'autoplay': 1,
+            'rel': 0
+          },
+          events: {
+            'onStateChange': onPlayerStateChange,
+            'onError': onPlayerError
+          }
+        });
+      } catch(e) {
+        console.error("YT Player init error:", e);
+        forceBlockedMode();
+      }
+    }
+
+    function onPlayerError(event) {
+      forceBlockedMode();
+    }
+
+    function forceBlockedMode() {
+      const normalPlayerEl = document.getElementById('normal-player-wrapper');
+      const blockedNoticeEl = document.getElementById('embed-blocked-notice');
+      const blockedControlsEl = document.getElementById('embed-blocked-controls');
+
+      if (normalPlayerEl) normalPlayerEl.classList.add('hidden');
+      if (blockedNoticeEl) blockedNoticeEl.classList.remove('hidden');
+      if (blockedControlsEl) blockedControlsEl.classList.remove('hidden');
+
+      const chap = (bookData.chapters || [])[currentChapterIndex] || { seconds: 0 };
+      const targetSec = chap.seconds !== undefined ? chap.seconds : 0;
+      updateSyncLinkAndDisplay(chap, targetSec);
+
+      if (chapterActiveTimers[currentChapterIndex]) {
+        startBlockedTimerInterval();
+      }
+    }
+
+    function onPlayerStateChange(event) {
+      if (event.data === YT.PlayerState.PLAYING) {
+        if (!positionSaveInterval) {
+          positionSaveInterval = setInterval(saveCurrentVideoPosition, 1000);
+        }
+      } else {
+        if (positionSaveInterval) {
+          clearInterval(positionSaveInterval);
+          positionSaveInterval = null;
+        }
+        saveCurrentVideoPosition();
+      }
+    }
+
+    function saveCurrentVideoPosition() {
+      const vid = bookData.youtubeId || getYoutubeVideoId(bookData.youtubeUrl) || "w0vbL3luTD8";
+      if (blockedEmbedIds.includes(vid)) return; 
+
+      if (ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
+        try {
+          const currentTime = Math.floor(ytPlayer.getCurrentTime());
+          if (currentTime >= 0) {
+            const key = getChapterTimeStorageKey(currentChapterIndex);
+            localStorage.setItem(key, currentTime);
+            updateTimeBadge(currentTime);
+          }
+        } catch(e){}
+      }
+    }
+
+    function stopCurrentPlayer() {
+      if (positionSaveInterval) {
+        clearInterval(positionSaveInterval);
+        positionSaveInterval = null;
+      }
+      if (ytPlayer && typeof ytPlayer.stopVideo === 'function') {
+        try { ytPlayer.stopVideo(); } catch(e){}
+      }
+      stopAutoBlockedTimer();
+    }
+
+    function getYoutubeVideoId(url) {
+      if (!url) return null;
+      const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+      return match ? match[1] : null;
+    }
+
+    function getStoredBooks() {
+      try {
+        const stored = localStorage.getItem('webook_library');
+        if (!stored) return [defaultBook];
+        return JSON.parse(stored);
+      } catch(e) {
+        return [defaultBook];
+      }
+    }
+
+    function saveBookToLibrary(newBook) {
+      let books = getStoredBooks();
+      books = books.filter(b => b.id !== newBook.id);
+      books.unshift(newBook);
+      localStorage.setItem('webook_library', JSON.stringify(books));
+    }
+
+    function initSavedBooks() {
+      const books = getStoredBooks();
+      const listEl = document.getElementById('saved-books-list');
+      if (!listEl) return;
+      
+      listEl.innerHTML = books.map(book => `
+        <div onclick="switchBook('${book.id}')" style="background:#0f172a; padding:0.85rem 1rem; border-radius:0.5rem; border:1px solid #1e293b; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:all 0.2s;" onmouseover="this.style.borderColor='#fbbf24'" onmouseout="this.style.borderColor='#1e293b'">
+          <div>
+            <span style="color:#fbbf24; font-weight:bold; font-size:0.8rem; margin-right:0.5rem;">📖 학습 책</span>
+            <span style="color:#e2e8f0; font-size:0.9rem; font-weight:600;">${book.title}</span>
+          </div>
+          <span style="color:#64748b; font-size:0.75rem;">챕터 ${(book.chapters || []).length}개 · 선택하기 →</span>
+        </div>
+      `).join('');
+    }
+
+    function switchBook(bookId) {
+      stopCurrentPlayer();
+      chapterActiveTimers = {};
+      chapterTimerStarts = {};
+      const books = getStoredBooks();
+      const found = books.find(b => b.id === bookId);
+      if (found) {
+        bookData = found;
+        renderBookInfo();
+        startReading();
+      }
+    }
+
+    function loadBook(bookId) {
+      const books = getStoredBooks();
+      const found = books.find(b => b.id === bookId);
+      if (found) bookData = found;
+      renderBookInfo();
+    }
+
+    function renderBookInfo() {
+      document.getElementById('book-title').innerText = bookData.title;
+      document.getElementById('book-desc').innerText = bookData.description || "사용자 맞춤형 AI 변환 웹북입니다.";
+      
+      const vid = bookData.youtubeId || getYoutubeVideoId(bookData.youtubeUrl) || "w0vbL3luTD8";
+      const homeIframe = document.getElementById('home-yt-iframe');
+      if (homeIframe) homeIframe.src = `https://www.youtube.com/embed/${vid}`;
+
+      const indexList = document.getElementById('index-list');
+      if (!indexList) return;
+      
+      indexList.innerHTML = (bookData.chapters || []).map((chap, idx) => `
+        <div onclick="openChapterDirect(${idx})" style="background:#0f172a; padding:0.75rem 1rem; border-radius:0.5rem; border:1px solid #1e293b; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <span style="color:#fbbf24; font-weight:bold; font-size:0.75rem; margin-right:0.5rem;">${chap.num}</span>
+            <span style="color:#e2e8f0; font-size:0.875rem;">${chap.title}</span>
+          </div>
+          <span style="color:#64748b; font-size:0.75rem;">${chap.time || '지점'} (시작 ${chap.seconds || 0}초)</span>
+        </div>
+      `).join('');
+    }
+
+    function showHome() {
+      stopCurrentPlayer();
+      chapterActiveTimers = {};
+      chapterTimerStarts = {};
+      initSavedBooks();
+      document.getElementById('view-home').classList.remove('hidden');
+      document.getElementById('view-reader').classList.add('hidden');
+    }
+
+    function getLastPositionStorageKey() {
+      const bookKey = bookData.id || "default_book";
+      return `webook_last_pos_${bookKey}`;
+    }
+
+    function getChapterTimeStorageKey(chapIdx) {
+      const bookKey = bookData.id || "default_book";
+      return `webook_time_${bookKey}_chap_${chapIdx}`;
+    }
+
+    function startReading() {
+      document.getElementById('view-home').classList.add('hidden');
+      document.getElementById('view-reader').classList.remove('hidden');
+      
+      let targetIndex = 0;
+      const lastPosKey = getLastPositionStorageKey();
+      const savedPos = localStorage.getItem(lastPosKey);
+
+      if (savedPos !== null) {
+        targetIndex = parseInt(savedPos, 10);
+        if (targetIndex >= (bookData.chapters || []).length) targetIndex = 0;
+        showResumeToast(targetIndex);
+      } else {
+        document.getElementById('resume-toast').classList.add('hidden');
+      }
+
+      const globalUnlocked = localStorage.getItem('webook_global_unlocked') === 'true';
+      const bookPwd = bookData.password || "1234";
+
+      if (bookPwd === "1234" && globalUnlocked) {
+        document.getElementById('lock-screen').classList.add('hidden');
+        document.getElementById('book-content').classList.remove('hidden');
+        renderChapter(targetIndex);
+      } else if (!globalUnlocked && bookPwd === "1234") {
+        document.getElementById('lock-screen').classList.remove('hidden');
+        document.getElementById('book-content').classList.add('hidden');
+        document.getElementById('input-password').value = "";
+        document.getElementById('lock-error').classList.add('hidden');
+        currentChapterIndex = targetIndex;
+      } else {
+        document.getElementById('lock-screen').classList.add('hidden');
+        document.getElementById('book-content').classList.remove('hidden');
+        renderChapter(targetIndex);
+      }
+    }
+
+    function openChapterDirect(idx) {
+      startReading();
+      const globalUnlocked = localStorage.getItem('webook_global_unlocked') === 'true';
+      const bookPwd = bookData.password || "1234";
+      if (bookPwd !== "1234" || globalUnlocked) {
+        renderChapter(idx);
+      } else {
+        currentChapterIndex = idx;
+      }
+    }
+
+    function showResumeToast(idx) {
+      const toast = document.getElementById('resume-toast');
+      const toastText = document.getElementById('resume-toast-text');
+      const chap = (bookData.chapters || [])[idx];
+      if (!chap) return;
+      toastText.innerText = `💡 이전에 학습하던 마지막 위치 (Chapter ${chap.num}: ${chap.title})로 이어서 시작합니다.`;
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 5000);
+    }
+
+    function unlockBook() {
+      const pwd = document.getElementById('input-password').value;
+      const bookPwd = bookData.password || "1234";
+
+      if (pwd === bookPwd || pwd === "1234") {
+        if (pwd === "1234" || bookPwd === "1234") {
+          localStorage.setItem('webook_global_unlocked', 'true');
+        }
+
+        document.getElementById('lock-screen').classList.add('hidden');
+        document.getElementById('book-content').classList.remove('hidden');
+        document.getElementById('lock-error').classList.add('hidden');
+        renderChapter(currentChapterIndex);
+      } else {
+        document.getElementById('lock-error').classList.remove('hidden');
+      }
+    }
+
+    function updateTimeBadge(totalSec) {
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      const badge = document.getElementById('player-time-badge');
+      const strEl = document.getElementById('blocked-current-time-str');
+      if (badge) badge.innerText = `${min}분 ${sec}초 지점`;
+      if (strEl) strEl.innerText = `${min}분 ${sec}초`;
+    }
+
+    function renderChapter(idx) {
+      saveCurrentVideoPosition();
+      currentChapterIndex = idx;
+      
+      localStorage.setItem(getLastPositionStorageKey(), idx);
+
+      const chap = (bookData.chapters || [])[idx];
+      if (!chap) return;
+
+      document.getElementById('chapter-num').innerText = `CHAPTER ${chap.num}`;
+      document.getElementById('chapter-title').innerText = chap.title;
+      document.getElementById('chapter-body').innerText = chap.content;
+      document.getElementById('reader-chapter-indicator').innerText = `${idx + 1} / ${(bookData.chapters || []).length} 챕터`;
+
+      // 저장된 마지막 학습 위치가 있으면 우선 복원, 없으면 챕터 기본 seconds 사용
+      const timeKey = getChapterTimeStorageKey(idx);
+      const savedSec = localStorage.getItem(timeKey);
+      const targetSec = savedSec !== null ? parseInt(savedSec, 10) : (chap.seconds !== undefined ? chap.seconds : 0);
+      
+      updateTimeBadge(targetSec);
+
+      const vid = bookData.youtubeId || getYoutubeVideoId(bookData.youtubeUrl) || "w0vbL3luTD8";
+      const normalPlayerEl = document.getElementById('normal-player-wrapper');
+      const blockedNoticeEl = document.getElementById('embed-blocked-notice');
+      const blockedControlsEl = document.getElementById('embed-blocked-controls');
+
+      stopAutoBlockedTimer();
+
+      if (blockedEmbedIds.includes(vid)) {
+        stopCurrentPlayer();
+        if (normalPlayerEl) normalPlayerEl.classList.add('hidden');
+        if (blockedNoticeEl) blockedNoticeEl.classList.remove('hidden');
+        if (blockedControlsEl) blockedControlsEl.classList.remove('hidden');
+        
+        updateSyncLinkAndDisplay(chap, targetSec);
+
+        if (chapterActiveTimers[currentChapterIndex]) {
+          startBlockedTimerInterval();
+        }
+      } else {
+        if (blockedNoticeEl) blockedNoticeEl.classList.add('hidden');
+        if (blockedControlsEl) blockedControlsEl.classList.add('hidden');
+        if (normalPlayerEl) normalPlayerEl.classList.remove('hidden');
+        
+        setTimeout(() => {
+          initPlayer(vid, targetSec);
+        }, 100);
+      }
+
+      loadChapterNote(idx);
+    }
+
+    function updateSyncLinkAndDisplay(chap, targetSec) {
+      const vid = bookData.youtubeId || getYoutubeVideoId(bookData.youtubeUrl) || "w0vbL3luTD8";
+      const syncLink = document.getElementById('sync-right-view-link');
+      const syncLinkText = document.getElementById('sync-link-text');
+      
+      const timeSec = targetSec;
+      const min = Math.floor(timeSec / 60);
+      const sec = timeSec % 60;
+
+      if (syncLink) {
+        syncLink.href = `https://www.youtube.com/watch?v=${vid}&t=${timeSec}s`;
+      }
+      if (syncLinkText) {
+        syncLinkText.innerText = `[${min}분 ${sec}초 지점] 우측 뷰에서 링크 열기`;
+      }
+      updateTimeBadge(timeSec);
+    }
+
+    function onSyncLinkClicked(event) {
+      event.preventDefault();
+
+      chapterActiveTimers[currentChapterIndex] = true;
+
+      const timeKey = getChapterTimeStorageKey(currentChapterIndex);
+      const currentSaved = localStorage.getItem(timeKey);
+      const chap = (bookData.chapters || [])[currentChapterIndex];
+      const baseSec = currentSaved !== null ? parseInt(currentSaved, 10) : (chap.seconds !== undefined ? chap.seconds : 0);
+
+      chapterTimerStarts[currentChapterIndex] = {
+        baseSec: baseSec,
+        startTime: Date.now()
+      };
+
+      startBlockedTimerInterval();
+
+      const vid = bookData.youtubeId || getYoutubeVideoId(bookData.youtubeUrl) || "w0vbL3luTD8";
+      const targetUrl = `https://www.youtube.com/watch?v=${vid}&t=${baseSec}s`;
+      window.open(targetUrl, '_blank');
+    }
+
+    function startBlockedTimerInterval() {
+      stopAutoBlockedTimer();
+
+      const timeKey = getChapterTimeStorageKey(currentChapterIndex);
+      const currentSaved = localStorage.getItem(timeKey);
+      const chap = (bookData.chapters || [])[currentChapterIndex];
+      const baseSec = currentSaved !== null ? parseInt(currentSaved, 10) : (chap.seconds !== undefined ? chap.seconds : 0);
+
+      chapterTimerStarts[currentChapterIndex] = {
+        baseSec: baseSec,
+        startTime: Date.now()
+      };
+
+      blockedTimerInterval = setInterval(() => {
+        const timerInfo = chapterTimerStarts[currentChapterIndex];
+        if (!timerInfo) return;
+
+        const elapsedSec = Math.floor((Date.now() - timerInfo.startTime) / 1000);
+        const currentSec = timerInfo.baseSec + elapsedSec;
+
+        localStorage.setItem(timeKey, currentSec);
+        updateTimeBadge(currentSec);
+      }, 400);
+    }
+
+    function stopAutoBlockedTimer() {
+      if (blockedTimerInterval) {
+        clearInterval(blockedTimerInterval);
+        blockedTimerInterval = null;
+      }
+    }
+
+    function resetBlockedTime() {
+      stopAutoBlockedTimer();
+      chapterActiveTimers[currentChapterIndex] = false;
+      delete chapterTimerStarts[currentChapterIndex];
+
+      const chap = (bookData.chapters || [])[currentChapterIndex];
+      const defaultSec = chap.seconds !== undefined ? chap.seconds : 0;
+      
+      const key = getChapterTimeStorageKey(currentChapterIndex);
+      localStorage.setItem(key, defaultSec);
+      updateTimeBadge(defaultSec);
+      updateSyncLinkAndDisplay(chap, defaultSec);
+    }
+
+    function getNoteStorageKey(chapIdx) {
+      const bookKey = bookData.id || "default_book";
+      return `webook_note_${bookKey}_chap_${chapIdx}`;
+    }
+
+    function loadChapterNote(chapIdx) {
+      const noteKey = getNoteStorageKey(chapIdx);
+      const savedNote = localStorage.getItem(noteKey) || "";
+      const noteEl = document.getElementById('chapter-note');
+      if (noteEl) noteEl.value = savedNote;
+      const statusEl = document.getElementById('note-status');
+      if (statusEl) statusEl.style.display = 'none';
+    }
+
+    function autoSaveNote() {
+      const noteStatus = document.getElementById('note-status');
+      if (noteStatus) {
+        noteStatus.innerText = "저장 중...";
+        noteStatus.style.display = 'inline';
+      }
+
+      clearTimeout(noteSaveTimeout);
+      noteSaveTimeout = setTimeout(() => {
+        saveNoteExplicitly();
+      }, 800);
+    }
+
+    function saveNoteExplicitly() {
+      const noteEl = document.getElementById('chapter-note');
+      if (!noteEl) return;
+      const noteContent = noteEl.value;
+      const noteKey = getNoteStorageKey(currentChapterIndex);
+      localStorage.setItem(noteKey, noteContent);
+
+      const noteStatus = document.getElementById('note-status');
+      if (noteStatus) {
+        noteStatus.innerText = "✓ 저장됨";
+        noteStatus.style.color = "#10b981";
+        noteStatus.style.display = 'inline';
+      }
+    }
+
+    function clearNote() {
+      if (confirm("현재 챕터의 노트 내용을 지우시겠습니까?")) {
+        const noteEl = document.getElementById('chapter-note');
+        if (noteEl) noteEl.value = "";
+        const noteKey = getNoteStorageKey(currentChapterIndex);
+        localStorage.removeItem(noteKey);
+        const statusEl = document.getElementById('note-status');
+        if (statusEl) statusEl.style.display = 'none';
+      }
+    }
+
+    function prevChapter() { 
+      saveNoteExplicitly();
+      if (currentChapterIndex > 0) renderChapter(currentChapterIndex - 1); 
+    }
+    function nextChapter() { 
+      saveNoteExplicitly();
+      if (bookData.chapters && currentChapterIndex < bookData.chapters.length - 1) renderChapter(currentChapterIndex + 1); 
+    }
+
+    function setFontScale(scale) {
+      const bodyEl = document.getElementById('chapter-body');
+      if (!bodyEl) return;
+      bodyEl.classList.remove('text-scale-sm', 'text-scale-md', 'text-scale-lg');
+      bodyEl.classList.add(`text-scale-${scale}`);
+
+      ['sm', 'md', 'lg'].forEach(s => {
+        const btn = document.getElementById(`btn-scale-${s}`);
+        if (btn) {
+          if (s === scale) btn.classList.add('active');
+          else btn.classList.remove('active');
+        }
+      });
+    }
+
+    function openModal() { document.getElementById('ai-modal').classList.remove('hidden'); }
+    function closeModal() { document.getElementById('ai-modal').classList.add('hidden'); }
+
+    async function processAIConversion() {
+      const apiKey = document.getElementById('api-key').value.trim();
+      const ytUrl = document.getElementById('yt-url').value.trim();
+      let rawText = document.getElementById('raw-text').value.trim();
+
+      if (!apiKey) { alert("Gemini API Key를 입력해 주세요."); return; }
+      if (!ytUrl) { alert("YouTube 영상 주소를 입력해 주세요."); return; }
+      if (!rawText) { alert("변환할 자막/녹취록 텍스트를 입력창에 붙여넣어 주세요."); return; }
+
+      const vid = getYoutubeVideoId(ytUrl);
+      if (!vid) { alert("올바른 YouTube 영상 주소를 입력해 주세요."); return; }
+
+      localStorage.setItem('gemini_api_key', apiKey);
+      const btn = document.getElementById('btn-convert');
+      btn.disabled = true;
+      btn.innerText = "⏳ Gemini 3.8 Flash가 원고와 타임스탬프를 분석 중입니다...";
+
+      const promptText = `
+        다음 유튜브 자막/텍스트를 바탕으로 읽기 편한 온라인 웹북용 JSON 데이터를 작성해 줘.
+        각 챕터별 대략적인 시작 시간(초 단위, seconds)을 추정해서 포함해, 오직 순수한 JSON 포맷으로만 전달해.
+
+        [원래 내용/텍스트]:
+        ${rawText}
+
+        [JSON 구조 규칙]:
+        {
+          "title": "책 제목",
+          "description": "한 줄 설명",
+          "chapters": [
+            { "num": "01", "title": "챕터 제목", "time": "약 3분", "seconds": 0, "content": "정제된 본문 텍스트" }
+          ]
+        }
+      `;
+
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error?.message || "API 요청 실패");
+        }
+
+        const data = await response.json();
+        const resText = data.candidates[0].content.parts[0].text;
+        const jsonMatch = resText.match(/\{[\s\S]*\}/);
+
+        if (jsonMatch) {
+          const parsedData = JSON.parse(jsonMatch[0]);
+          
+          const newBook = {
+            id: vid,
+            title: parsedData.title,
+            description: parsedData.description || "새로 변환된 AI 웹북입니다.",
+            youtubeUrl: ytUrl,
+            youtubeId: vid,
+            password: "1234",
+            chapters: parsedData.chapters
+          };
+
+          saveBookToLibrary(newBook);
+          bookData = newBook;
+          localStorage.setItem('webook_global_unlocked', 'true');
+
+          renderBookInfo();
+          initSavedBooks();
+          closeModal();
+          startReading();
+          alert("AI 웹북 변환 및 보관함 저장이 완료되었습니다!");
+        } else {
+          alert("JSON 데이터를 파싱할 수 없습니다. 다시 시도해 주세요.");
+        }
+      } catch (err) {
+        alert(`오류 발생: ${err.message}`);
+      } finally {
+        btn.innerText = "AI 책 변환 시작하기";
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
